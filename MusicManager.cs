@@ -209,12 +209,17 @@ namespace MusicManager
                 Destroy(temp);
                 source.Play();
             }
+
             PrepNextSong();
         }
         private void PrepNextSong()
         {
             if (SongLoader == null || (SongLoader != null && SongLoader.IsCompleted))
             {
+                if (SongLoader != null && SongLoader.IsCompleted)
+                {
+                    SongLoader.Dispose();
+                }
                 songLoaderCancelation = new CancellationTokenSource();
                 bool[] bools = new bool[4];
                 if (Settings.CategoriesMode)
@@ -257,6 +262,7 @@ namespace MusicManager
             await Task.WhenAll(SongFileInitializers);
             for (int i = 0; i < SongData.Count;i++)
             {
+                SongFileInitializers[i].Dispose();
                 AllSongs.AddRange(SongData[i].AddedSongs.Where(song => song.song != null));
             }
             AllSongs.AsParallel().Do(song =>
