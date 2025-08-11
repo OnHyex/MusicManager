@@ -28,6 +28,8 @@ namespace MusicManager
         internal bool VanillaMusicHasEnded = false;
         internal bool PlayingVanillaMusic = false;
         internal bool FinishedLoading = false;
+        internal bool ForceNextSong = false;
+        internal bool ForcedSongIsVanilla = false;
         private AudioClip NextSong;
         private CancellationTokenSource songLoaderCancelation;
         private Task SongLoader;
@@ -41,6 +43,7 @@ namespace MusicManager
              VanillaSongInfo.CreateVanillaSong("mx_lasttogo", true, false, true, true),
              VanillaSongInfo.CreateVanillaSong("mx_infected_commander", true, false, false, false),
              VanillaSongInfo.CreateVanillaSong("mx_lostcolony_theme_two", true, true, true, true),
+             VanillaSongInfo.CreateVanillaSong("mx_corrupteddrone_lp2", true, false, true, true),
              VanillaSongInfo.CreateVanillaSong("mx_colunion_v4", false, false, false, false),
              VanillaSongInfo.CreateVanillaSong("mx_wd_corp_v3", false, false, false, false),
              VanillaSongInfo.CreateVanillaSong("mx_AllGent_Heist", false, false, false, false),
@@ -142,14 +145,25 @@ namespace MusicManager
             {
                 if (Settings.Enabled)
                 {
-                    if (!PlayingVanillaMusic)
+                    if (!ForceNextSong)
                     {
-                        if (source != null)
+                        if (!PlayingVanillaMusic)
                         {
-                            if (!source.isPlaying)
+                            if (source != null)
                             {
-                                PlayNext();
+                                if (!source.isPlaying)
+                                {
+                                    PlayNext();
+                                }
                             }
+                        }
+                    }
+                    else
+                    {
+                        if (NextSong != null)
+                        {
+                            PlayNext();
+                            ForceNextSong = false;
                         }
                     }
                     //if (!PLNetworkManager.Instance.IsTyping && PLInput.Instance.GetButtonDown("MusicMenu"))
@@ -168,24 +182,38 @@ namespace MusicManager
         }
         void StopLoadingNextSong()
         {
-            songLoaderCancelation.Cancel();
+            if (SongLoader != null && !SongLoader.IsCompleted)
+            {
+                songLoaderCancelation.Cancel();
+            }
         }
-        void PlayNext()
+        void PlayNext(int Selected = -1)
         {
             if (PlayingVanillaMusic)
             {
                 StopVanillaMusic();
             }
-            if (!Settings.CategoriesMode)
+            if (ForceNextSong)
             {
-                if (Settings.VanillaMusicEnabled && UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
+                if (ForcedSongIsVanilla && Selected >= 0 && Selected < VanillaSongInfos.Count)
                 {
-                    PlayVanillaMusic();
+                    if (source != null && source.isPlaying)
+                    {
+                        PlayVanillaMusic(Selected);
+                    }
                 }
                 else
                 {
                     PlayModdedSong();
                 }
+            }
+            if (Settings.VanillaMusicEnabled && UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
+            {
+                PlayVanillaMusic();
+            }
+            else
+            {
+                PlayModdedSong();
             }
         }
         void StopVanillaMusic()
@@ -194,10 +222,24 @@ namespace MusicManager
             PLMusic.Instance.StopCurrentMusic();
             this.EndVanillaMusic = false;
         }
-        private void PlayVanillaMusic()
+        private void PlayVanillaMusic(int Selected = -1)
         {
             this.StartVanillaMusic = true;
-            this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
+            if (Selected >= 0 && Selected < VanillaSongInfos.Count)
+            {
+                this.VanillaSongInfos[Selected].PlaySong();
+            } else
+            {
+                if (Settings.CategoriesMode)
+                {
+                    List<VanillaSongInfo> list = this.VanillaSongInfos.Where(song => ((song.IsCombatTrack && PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic && PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic && PLMusic.Instance.m_PlanetMusicPlaying))).ToList<VanillaSongInfo>();
+                    list[UnityEngine.Random.Range(0, list.Count - 1)].PlaySong();
+                }
+                else
+                {
+                    this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
+                }
+            }
             this.StartVanillaMusic = false;
         }
         void PlayModdedSong()
@@ -209,10 +251,23 @@ namespace MusicManager
                 Destroy(temp);
                 source.Play();
             }
-
             PrepNextSong();
         }
-        private void PrepNextSong()
+        internal void ForcePlaySong(int SelectedSong)
+        {
+            ForceNextSong = true;
+            if (PlayingVanillaMusic)
+            {
+                StopVanillaMusic();
+            }
+            if (source != null && source.isPlaying)
+            {
+                StopLoadingNextSong();
+            }
+            NextSong = null;
+            PrepNextSong(SelectedSong);
+        }
+        private void PrepNextSong(int SelectedSong = -1)
         {
             if (SongLoader == null || (SongLoader != null && SongLoader.IsCompleted))
             {
@@ -221,12 +276,13 @@ namespace MusicManager
                     SongLoader.Dispose();
                 }
                 songLoaderCancelation = new CancellationTokenSource();
-                bool[] bools = new bool[4];
+                bool[] bools = new bool[5];
                 if (Settings.CategoriesMode)
                 {
                     bools[0] = PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
                     bools[1] = !PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
                     bools[2] = PLMusic.Instance.m_CombatMusicPlaying && PLMusic.Instance.m_SpecialMusicPlaying;
+                    bools[4] = PLMusic.Instance.m_PlanetMusicPlaying;
                     if (PLEncounterManager.Instance.PlayerShip != null)
                     {
                         bools[3] = PLEncounterManager.Instance.PlayerShip.InWarp;
@@ -236,6 +292,7 @@ namespace MusicManager
                         bools[0] = false;
                         bools[1] = false;
                         bools[2] = false;
+                        bools[4] = false;
                     }
                 }
                 bool Category = Settings.CategoriesMode;
@@ -243,7 +300,7 @@ namespace MusicManager
                 tempSongCategories.AddRange(AllSongs);
                 SongLoader = Task.Run(async () =>
                 {
-                    await LoadNextSong(songLoaderCancelation.Token, tempSongCategories, Category, bools[0], bools[1], bools[2], bools[3]);
+                    await LoadNextSong(songLoaderCancelation.Token, tempSongCategories, Category, bools[0], bools[1], bools[2], bools[3], bools[4], SelectedSong);
                 });
                 //Debug.Log("Started Prep");
                 //Gotta Run it not in the Threadpool for debugging purposes
@@ -265,7 +322,7 @@ namespace MusicManager
                 SongFileInitializers[i].Dispose();
                 AllSongs.AddRange(SongData[i].AddedSongs.Where(song => song.song != null));
             }
-            AllSongs.AsParallel().Do(song =>
+            AllSongs.Do(song =>
             {
                 if (song.Name.Contains('.'))
                 {
@@ -302,7 +359,7 @@ namespace MusicManager
                 await Task.Yield();
             }
         }
-        private async Task LoadNextSong(CancellationToken cancellationToken, List<SongInfo> WorkingSongData, bool categories, bool combat, bool ambient, bool boss, bool warp)
+        private async Task LoadNextSong(CancellationToken cancellationToken, List<SongInfo> WorkingSongData, bool categories, bool combat, bool ambient, bool boss, bool warp, bool planet, int Selected)
         {
             await Task.Yield();
             while (!FinishedLoading)
@@ -332,10 +389,15 @@ namespace MusicManager
             {
                 return;
             }
+            if (Selected != -1 && Selected >= 0 && Selected < songInfos.Count)
+            {
+                await LoadAudioFile(songInfos[Selected], cancellationToken);
+                return;
+            }
             if (categories)
             {
                 //Debug.Log("Sorting Categories");
-                List<SongInfo> tempSongInfos = WorkingSongData.FindAll(song => (song.IsCombatTrack && combat) && (song.IsAmbientMusic && ambient) && (song.IsBossMusic && boss) && (song.IsWarpMusic && warp));
+                List<SongInfo> tempSongInfos = WorkingSongData.FindAll(song => (song.IsCombatTrack & combat) | (song.IsBossMusic & boss) | (song.IsAmbientMusic & ambient) | (song.IsPlanetMusic & planet) | (song.IsWarpMusic & warp));
                 if (tempSongInfos.Count > 0)
                 {
                     songInfos = tempSongInfos;
@@ -347,6 +409,7 @@ namespace MusicManager
                 return;
             }
             //Debug.Log("Calling LoadAudioFile");
+            
             await LoadAudioFile(songInfos[new System.Random().Next(songInfos.Count)], cancellationToken);
         }
         private async Task LoadAudioFile(SongInfo song, CancellationToken cancellationToken)
@@ -435,6 +498,7 @@ namespace MusicManager
         }
         private void ReloadDirectories()
         {
+            //SongData.AsParallel().Do(input => input.AddedSongs.Do(song => song = null));
             SongData.Clear();
             SongData.Add(new SongCategoryData(Mod.Instance.MusicDirectory));
             Mod.Instance.MusicSubDirectories = Mod.Instance.MusicDirectory.GetDirectories();

@@ -7,13 +7,14 @@ namespace MusicManager
     [JsonObject(MemberSerialization.OptIn)]
     internal sealed class SongInfo
     {
-        public SongInfo(string name, bool combat = false, bool ambient = false, bool boss = false, bool warp = false)
+        public SongInfo(string name, bool combat = false, bool ambient = false, bool boss = false, bool warp = false, bool planet = false)
         {
             Name = name;
             IsCombatTrack = combat;
             IsAmbientMusic = ambient;
             IsBossMusic = boss;
             IsWarpMusic = warp;
+            IsPlanetMusic = planet;
         }
         [JsonProperty]
         internal string Name;
@@ -25,6 +26,8 @@ namespace MusicManager
         internal bool IsBossMusic;
         [JsonProperty]
         internal bool IsWarpMusic;
+        [JsonProperty]
+        internal bool IsPlanetMusic;
         [JsonIgnore]
         internal FileInfo song = null;
     }
@@ -33,28 +36,22 @@ namespace MusicManager
         internal static VanillaSongInfo CreateVanillaSong(string name, bool combat = false, bool planet = false, bool special = false, bool looping = false)
         {
             VanillaSongInfo song = new VanillaSongInfo(name.Substring(3));
-            if (!combat && !special && !looping)
-            {
-                song.IsAmbientMusic = true;
-            }
-            song.IsBossMusic = special && combat;
-            song.IsWarpMusic = false;
             song.IsCombatTrack = combat;
+            song.IsPlanetMusic = planet;
+            song.IsSpecialMusic = special;
             return song;
         }
-        internal VanillaSongInfo(string name, bool combat = false, bool ambient = false, bool boss = false, bool warp = false)
+        internal VanillaSongInfo(string name, bool combat = false, bool planet = false, bool special = false, bool looping = false)
         {
             this.Name = name;
             IsCombatTrack = combat;
-            IsAmbientMusic = ambient;
-            IsBossMusic = boss;
-            IsWarpMusic = warp;
+            IsPlanetMusic = planet;
+            IsSpecialMusic = special;
         }
         internal string Name;
         internal bool IsCombatTrack;
-        internal bool IsAmbientMusic;
-        internal bool IsBossMusic;
-        internal bool IsWarpMusic;
+        internal bool IsPlanetMusic;
+        internal bool IsSpecialMusic;
         private static readonly string Prefix = "mx_";
         internal void PlaySong()
         {

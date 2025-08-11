@@ -53,10 +53,11 @@ namespace MusicManager
             }
             else
             {
-                SongInfo song = new SongInfo(fileNameNoExtension, false, true, false, false);
+                SongInfo song = new SongInfo(fileNameNoExtension, false, true, false, false, false);
                 song.song = file;
-                this.AddedSongs.Add(new SongInfo(fileNameNoExtension, false, true, false, false));
+                this.AddedSongs.Add(new SongInfo(fileNameNoExtension, false, true, false, false, false));
             }
+            fileNameNoExtension = null;
         }
         internal void OutputJson()
         {
@@ -80,6 +81,7 @@ namespace MusicManager
             {
                 outputFile.WriteLine(jsonString);
             }
+            jsonString = null;
         }
     }
 

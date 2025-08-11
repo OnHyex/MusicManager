@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Threading.Tasks;
 
 namespace MusicManager
 {
@@ -23,6 +24,7 @@ namespace MusicManager
             "Warp Music"
         };
         internal static Vector2 CategoriesScroll = new Vector2(0, 0);
+        private Task ReloadDirectories;
 
         public override string Name()
         {
@@ -44,16 +46,18 @@ namespace MusicManager
             GUILayout.Label($"Volume: {Volume * 100}%", GUILayout.MinWidth(100),GUILayout.MaxWidth(100), GUILayout.MaxHeight(25));
             Volume = GUILayout.HorizontalSlider(Volume, 0f, 1f);
             GUILayout.EndHorizontal();
-            float size = GUILayoutUtility.GetLastRect().width;
+            
             if (MusicManager.Instance.FinishedLoading)
             {
                 GUILayout.BeginHorizontal();
+                if (ReloadDirectories != null && ReloadDirectories.IsCompleted) { ReloadDirectories.Dispose(); }
                 if(GUILayout.Button("Reload Song List"))
                 {
-                    _ = MusicManager.Instance.ReloadSongs();
+                    ReloadDirectories = MusicManager.Instance.ReloadSongs();
                 }
                 CategoryOrganizationMode = GUILayout.Toggle(CategoryOrganizationMode, "Organize Songs");
                 GUILayout.EndHorizontal();
+                float size = GUILayoutUtility.GetLastRect().width;
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
                 GUILayout.Box("All Songs");
@@ -65,6 +69,8 @@ namespace MusicManager
                         if (!CategoryOrganizationMode)
                         {
                             //Force Play a song
+                            MusicManager.Instance.ForcePlaySong(i);
+                            MusicManager.Instance.ForcedSongIsVanilla = false;
                         }
                         else
                         {
