@@ -48,7 +48,7 @@ namespace MusicManager
         }
         public override string Version => "1.0.0";
         public override string Name => "Music Manager";
-        public override string Author => "OnHyex";
+        public override string Author => "OnHyex, Mest";
         public override string ShortDescription => "A brief description";
         public override string LongDescription => "All the details";
         public override int MPRequirements => (int)MPRequirement.None;

@@ -12,6 +12,7 @@ namespace MusicManager
         internal static bool Enabled = true;
         internal static bool CategoriesMode = false;
         internal static bool VanillaMusicEnabled = true;
+        internal static bool LetSongsPlayOut = true;
         internal static Vector2 AllSongsScroll = new Vector2(0, 0);
         internal static bool CategoryOrganizationMode = false;
         internal static float Volume = 1f;
@@ -33,9 +34,11 @@ namespace MusicManager
         {
             return "Music Manager";
         }
+        internal static bool IsOpen = false;
         public override void OnOpen()
         {
             base.OnOpen();
+            IsOpen = true;
             if (NonDuplicateVanillaSongs.Count == 0)
             {
                 foreach (VanillaSongInfo song in MusicManager.Instance.VanillaSongInfos)
@@ -46,19 +49,33 @@ namespace MusicManager
                     }
                 }
             }
+            tempVanillaMusicVolume = PLXMLOptionsIO.Instance.CurrentOptions.GetFloatValue("VolumeMusic");
         }
+        public override void OnClose()
+        {
+            base.OnClose();
+            IsOpen = false;
+        }
+        float tempVanillaMusicVolume;
         public override void Draw()
         {
             GUILayout.BeginHorizontal();
             Enabled = GUILayout.Toggle(Enabled, "Enabled");
             CategoriesMode = GUILayout.Toggle(CategoriesMode, "Situational Music Enabled");
             VanillaMusicEnabled = GUILayout.Toggle(VanillaMusicEnabled, "Vanilla Music Enabled");
+            LetSongsPlayOut = GUILayout.Toggle(LetSongsPlayOut, "Songs Play Till End");
+
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"Volume: {Volume * 100}%", GUILayout.MinWidth(100),GUILayout.MaxWidth(100), GUILayout.MaxHeight(25));
+            GUILayout.Label($"Vanilla Volume: {(tempVanillaMusicVolume * 100).ToString("0.0")}%");
+            tempVanillaMusicVolume = GUILayout.HorizontalSlider(tempVanillaMusicVolume, 0f, 1f);
+            PLXMLOptionsIO.Instance.CurrentOptions.SetFloatValue("VolumeMusic", tempVanillaMusicVolume);
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Custom Volume: {(Volume * 100).ToString("0.0")}%");
             Volume = GUILayout.HorizontalSlider(Volume, 0f, 1f);
             GUILayout.EndHorizontal();
-            
+
             if (MusicManager.Instance.FinishedLoading)
             {
                 GUILayout.BeginHorizontal();
@@ -82,7 +99,7 @@ namespace MusicManager
                 GUILayout.BeginHorizontal();
                 if (CategoryOrganizationMode)
                 {
-                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.245f));
+                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.246f));
                 }
                 else
                 {
@@ -155,7 +172,7 @@ namespace MusicManager
 
                 if (CategoryOrganizationMode)
                 {
-                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.245f));
+                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.246f));
                     GUILayout.BeginHorizontal();
                     if (GUILayout.Button("<-"))
                     {

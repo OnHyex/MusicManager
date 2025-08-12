@@ -178,6 +178,10 @@ namespace MusicManager
             {
                 PrepNextSong();
             }
+            if (Settings.IsOpen)
+            {
+                source.volume = Settings.Volume;
+            }
         }
         void StopLoadingNextSong()
         {
