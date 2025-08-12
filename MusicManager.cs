@@ -29,7 +29,6 @@ namespace MusicManager
         internal bool PlayingVanillaMusic = false;
         internal bool FinishedLoading = false;
         internal bool ForceNextSong = false;
-        internal bool ForcedSongIsVanilla = false;
         private AudioClip NextSong;
         private CancellationTokenSource songLoaderCancelation;
         private Task SongLoader;
@@ -195,17 +194,8 @@ namespace MusicManager
             }
             if (ForceNextSong)
             {
-                if (ForcedSongIsVanilla && Selected >= 0 && Selected < VanillaSongInfos.Count)
-                {
-                    if (source != null && source.isPlaying)
-                    {
-                        PlayVanillaMusic(Selected);
-                    }
-                }
-                else
-                {
-                    PlayModdedSong();
-                }
+                PlayModdedSong();
+                return;
             }
             if (Settings.VanillaMusicEnabled && UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
             {
@@ -222,24 +212,32 @@ namespace MusicManager
             PLMusic.Instance.StopCurrentMusic();
             this.EndVanillaMusic = false;
         }
-        private void PlayVanillaMusic(int Selected = -1)
+        private void PlayVanillaMusic()
         {
             this.StartVanillaMusic = true;
-            if (Selected >= 0 && Selected < VanillaSongInfos.Count)
+            if (Settings.CategoriesMode)
             {
-                this.VanillaSongInfos[Selected].PlaySong();
-            } else
-            {
-                if (Settings.CategoriesMode)
-                {
-                    List<VanillaSongInfo> list = this.VanillaSongInfos.Where(song => ((song.IsCombatTrack && PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic && PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic && PLMusic.Instance.m_PlanetMusicPlaying))).ToList<VanillaSongInfo>();
-                    list[UnityEngine.Random.Range(0, list.Count - 1)].PlaySong();
-                }
-                else
-                {
-                    this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
-                }
+                List<VanillaSongInfo> list = this.VanillaSongInfos.FindAll(song => ((song.IsCombatTrack && PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic && PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic && PLMusic.Instance.m_PlanetMusicPlaying)));
+                list[UnityEngine.Random.Range(0, list.Count - 1)].PlaySong();
             }
+            else
+            {
+                this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
+            }
+            this.StartVanillaMusic = false;
+        }
+        internal void PlayVanillaMusic(VanillaSongInfo song)
+        {
+            this.StartVanillaMusic = true;
+            if (PlayingVanillaMusic)
+            {
+                StopVanillaMusic();
+            }
+            if (source != null && source.isPlaying)
+            {
+                source.Pause();
+            }
+            song.PlaySong();
             this.StartVanillaMusic = false;
         }
         void PlayModdedSong()

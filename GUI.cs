@@ -16,16 +16,19 @@ namespace MusicManager
         internal static bool CategoryOrganizationMode = false;
         internal static float Volume = 1f;
         private static int CurrentCategory = 0;
+        //private static float width = 0;
         private static readonly string[] CategoryNames = new string[] 
         { 
             "Combat Music",
             "Ambient Music",
             "Boss Music",
-            "Warp Music"
+            "Warp Music",
+            "Planet Music"
         };
         internal static Vector2 CategoriesScroll = new Vector2(0, 0);
-        private Task ReloadDirectories;
-
+        private static Task ReloadDirectories;
+        private static List<VanillaSongInfo> NonDuplicateVanillaSongs = new List<VanillaSongInfo>();
+        private static bool ModdedSongDisplay = true;
         public override string Name()
         {
             return "Music Manager";
@@ -33,7 +36,16 @@ namespace MusicManager
         public override void OnOpen()
         {
             base.OnOpen();
-
+            if (NonDuplicateVanillaSongs.Count == 0)
+            {
+                foreach (VanillaSongInfo song in MusicManager.Instance.VanillaSongInfos)
+                {
+                    if (!NonDuplicateVanillaSongs.Exists(s => s.Name.Equals(song.Name)))
+                    {
+                        NonDuplicateVanillaSongs.Add(song);
+                    }
+                }
+            }
         }
         public override void Draw()
         {
@@ -55,48 +67,86 @@ namespace MusicManager
                 {
                     ReloadDirectories = MusicManager.Instance.ReloadSongs();
                 }
-                CategoryOrganizationMode = GUILayout.Toggle(CategoryOrganizationMode, "Organize Songs");
-                GUILayout.EndHorizontal();
-                float size = GUILayoutUtility.GetLastRect().width;
-                GUILayout.BeginHorizontal();
-                GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
-                GUILayout.Box("All Songs");
-                AllSongsScroll = GUILayout.BeginScrollView(AllSongsScroll, false, true);
-                for (int i = 0; i < MusicManager.Instance.AllSongs.Count; i++)
+                if (GUILayout.Button("Modded Songs"))
                 {
-                    if (GUILayout.Button($"{MusicManager.Instance.AllSongs[i].Name}"))
+                    ModdedSongDisplay = true;
+                }
+                if (GUILayout.Button("Vanilla Songs"))
+                {
+                    ModdedSongDisplay = false;
+                    CategoryOrganizationMode = false;
+                }
+                CategoryOrganizationMode = GUILayout.Toggle(CategoryOrganizationMode, "Organize Songs");
+                CategoryOrganizationMode = ModdedSongDisplay && CategoryOrganizationMode;
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (CategoryOrganizationMode)
+                {
+                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.245f));
+                }
+                else
+                {
+                    GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
+                }
+                //if (width < Mathf.Epsilon)
+                //{
+                //    width = GUILayoutUtility.GetLastRect().width;
+                //}
+                
+                if (ModdedSongDisplay)
+                {
+                    GUILayout.Box("Modded Songs");
+                    AllSongsScroll = GUILayout.BeginScrollView(AllSongsScroll, false, true);
+                    for (int i = 0; i < MusicManager.Instance.AllSongs.Count; i++)
                     {
-                        if (!CategoryOrganizationMode)
+                        if (GUILayout.Button($"{MusicManager.Instance.AllSongs[i].Name}"))
                         {
-                            //Force Play a song
-                            MusicManager.Instance.ForcePlaySong(i);
-                            MusicManager.Instance.ForcedSongIsVanilla = false;
-                        }
-                        else
-                        {
-                            switch (CurrentCategory)
+                            if (!CategoryOrganizationMode)
                             {
-                                default:
-                                    MusicManager.Instance.AllSongs[i].IsCombatTrack = !MusicManager.Instance.AllSongs[i].IsCombatTrack;
-                                    break;
-                                case 1:
-                                    MusicManager.Instance.AllSongs[i].IsAmbientMusic = !MusicManager.Instance.AllSongs[i].IsAmbientMusic;
-                                    break;
-                                case 2:
-                                    MusicManager.Instance.AllSongs[i].IsBossMusic = !MusicManager.Instance.AllSongs[i].IsBossMusic;
-                                    break;
-                                case 3:
-                                    MusicManager.Instance.AllSongs[i].IsWarpMusic = !MusicManager.Instance.AllSongs[i].IsWarpMusic;
-                                    break;
+                                //Force Play a song
+                                MusicManager.Instance.ForcePlaySong(i);
                             }
-                            //[JsonProperty]
-                            //internal bool IsCombatTrack;
-                            //[JsonProperty]
-                            //internal bool IsAmbientMusic;
-                            //[JsonProperty]
-                            //internal bool IsBossMusic;
-                            //[JsonProperty]
-                            //internal bool IsWarpMusic;
+                            else
+                            {
+                                switch (CurrentCategory)
+                                {
+                                    default:
+                                        MusicManager.Instance.AllSongs[i].IsCombatTrack = !MusicManager.Instance.AllSongs[i].IsCombatTrack;
+                                        break;
+                                    case 1:
+                                        MusicManager.Instance.AllSongs[i].IsAmbientMusic = !MusicManager.Instance.AllSongs[i].IsAmbientMusic;
+                                        break;
+                                    case 2:
+                                        MusicManager.Instance.AllSongs[i].IsBossMusic = !MusicManager.Instance.AllSongs[i].IsBossMusic;
+                                        break;
+                                    case 3:
+                                        MusicManager.Instance.AllSongs[i].IsWarpMusic = !MusicManager.Instance.AllSongs[i].IsWarpMusic;
+                                        break;
+                                    case 4:
+                                        MusicManager.Instance.AllSongs[i].IsPlanetMusic = !MusicManager.Instance.AllSongs[i].IsPlanetMusic;
+                                        break;
+                                }
+                                //[JsonProperty]
+                                //internal bool IsCombatTrack;
+                                //[JsonProperty]
+                                //internal bool IsAmbientMusic;
+                                //[JsonProperty]
+                                //internal bool IsBossMusic;
+                                //[JsonProperty]
+                                //internal bool IsWarpMusic;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    GUILayout.Box("Vanilla Songs");
+                    AllSongsScroll = GUILayout.BeginScrollView(AllSongsScroll, false, true);
+                    for (int i = 0; i < NonDuplicateVanillaSongs.Count; i++)
+                    {
+                        if (GUILayout.Button($"{NonDuplicateVanillaSongs[i].Name}"))
+                        {
+                            MusicManager.Instance.PlayVanillaMusic(NonDuplicateVanillaSongs[i]);
                         }
                     }
                 }
@@ -105,14 +155,14 @@ namespace MusicManager
 
                 if (CategoryOrganizationMode)
                 {
-                    GUILayout.BeginVertical(GUILayout.MaxWidth((size/2) - 5),GUILayout.ExpandWidth(true));
+                    GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.245f));
                     GUILayout.BeginHorizontal();
                     if (GUILayout.Button("<-"))
                     {
                         CategoriesScroll = new Vector2(0, 0);
                         if (CurrentCategory == 0)
                         {
-                            CurrentCategory = 3;
+                            CurrentCategory = 4;
                         }
                         CurrentCategory--;
                     }
@@ -120,7 +170,7 @@ namespace MusicManager
                     if (GUILayout.Button("->"))
                     {
                         CategoriesScroll = new Vector2(0, 0);
-                        if (CurrentCategory == 3)
+                        if (CurrentCategory == 4)
                         {
                             CurrentCategory = 0;
                         }
@@ -141,6 +191,8 @@ namespace MusicManager
                                 return song.IsBossMusic;
                             case 3:
                                 return song.IsWarpMusic;
+                            case 4:
+                                return song.IsPlanetMusic;
                         }
                     });
                     for (int i = 0; i < categorySongs.Count; i++)
@@ -160,6 +212,9 @@ namespace MusicManager
                                     break;
                                 case 3:
                                     categorySongs[i].IsWarpMusic = !categorySongs[i].IsWarpMusic;
+                                    break;
+                                case 4:
+                                    categorySongs[i].IsPlanetMusic = !categorySongs[i].IsPlanetMusic;
                                     break;
                             }
                         }
