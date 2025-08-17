@@ -9,7 +9,7 @@ using System.Linq;
 using PulsarModLoader.Keybinds;
 namespace MusicManager
 {
-    public sealed class Mod : PulsarMod, IKeybind
+    public sealed class Mod : PulsarMod//, IKeybind
     {
         public static Mod Instance;
         internal DirectoryInfo MusicDirectory;
@@ -53,9 +53,9 @@ namespace MusicManager
         public override string LongDescription => "All the details";
         public override int MPRequirements => (int)MPRequirement.None;
         public override string HarmonyIdentifier() => $"{Author}.{Name}";
-        public void RegisterBinds(KeybindManager manager)
-        {
-            manager.NewBind("Music Menu", "MusicMenu", "Basics", ",");
-        }
+        //public void RegisterBinds(KeybindManager manager)
+        //{
+        //    manager.NewBind("Music Menu", "MusicMenu", "Basics", ",");
+        //}
     }
 }

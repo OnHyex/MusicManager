@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Threading.Tasks;
+using Crosstales.BWF.Data;
 
 namespace MusicManager
 {
@@ -10,6 +11,7 @@ namespace MusicManager
     {
         internal static float ChanceOfVanillaMusic = 0.1f;
         internal static bool Enabled = true;
+        private static bool EnabledStateStorage = true;
         internal static bool CategoriesMode = false;
         internal static bool VanillaMusicEnabled = true;
         internal static bool LetSongsPlayOut = true;
@@ -30,6 +32,7 @@ namespace MusicManager
         private static Task ReloadDirectories;
         private static List<VanillaSongInfo> NonDuplicateVanillaSongs = new List<VanillaSongInfo>();
         private static bool ModdedSongDisplay = true;
+        internal static bool ForceLaunchedSong = false;
         public override string Name()
         {
             return "Music Manager";
@@ -41,7 +44,7 @@ namespace MusicManager
             IsOpen = true;
             if (NonDuplicateVanillaSongs.Count == 0)
             {
-                foreach (VanillaSongInfo song in MusicManager.Instance.VanillaSongInfos)
+                foreach (VanillaSongInfo song in VanillaSongInfo.VanillaSongInfos)
                 {
                     if (!NonDuplicateVanillaSongs.Exists(s => s.Name.Equals(song.Name)))
                     {
@@ -59,23 +62,60 @@ namespace MusicManager
         float tempVanillaMusicVolume;
         public override void Draw()
         {
+            if (GUI.changed)
+            {
+                if (!Enabled && EnabledStateStorage)
+                {
+                    PLMusic.Instance.StopCurrentMusic();
+                }
+                Enabled = EnabledStateStorage;
+            }
             GUILayout.BeginHorizontal();
-            Enabled = GUILayout.Toggle(Enabled, "Enabled");
+            EnabledStateStorage = GUILayout.Toggle(EnabledStateStorage, "Enabled");
             CategoriesMode = GUILayout.Toggle(CategoriesMode, "Situational Music Enabled");
             VanillaMusicEnabled = GUILayout.Toggle(VanillaMusicEnabled, "Vanilla Music Enabled");
             LetSongsPlayOut = GUILayout.Toggle(LetSongsPlayOut, "Songs Play Till End");
 
             GUILayout.EndHorizontal();
+            if (VanillaMusicEnabled)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label($"Vanilla Music Chance: {(ChanceOfVanillaMusic * 100).ToString("0.0")}%");
+                ChanceOfVanillaMusic = GUILayout.HorizontalSlider(ChanceOfVanillaMusic, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
+                GUILayout.EndHorizontal();
+            }
+
+            //Volume Control
             GUILayout.BeginHorizontal();
             GUILayout.Label($"Vanilla Volume: {(tempVanillaMusicVolume * 100).ToString("0.0")}%");
-            tempVanillaMusicVolume = GUILayout.HorizontalSlider(tempVanillaMusicVolume, 0f, 1f);
+            tempVanillaMusicVolume = GUILayout.HorizontalSlider(tempVanillaMusicVolume, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
             PLXMLOptionsIO.Instance.CurrentOptions.SetFloatValue("VolumeMusic", tempVanillaMusicVolume);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label($"Custom Volume: {(Volume * 100).ToString("0.0")}%");
-            Volume = GUILayout.HorizontalSlider(Volume, 0f, 1f);
+            Volume = GUILayout.HorizontalSlider(Volume, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
             GUILayout.EndHorizontal();
 
+            //Show name of currently playing song
+            if (MusicManager.Instance.PlayingVanillaMusic)
+            {
+                GUILayout.BeginHorizontal();
+
+                GUILayout.Box($"Now Playing Vanilla Music: {MusicManager.Instance.CurrentlyPlayingSongName}");
+
+                GUILayout.EndHorizontal();
+            }
+            else
+            {
+                if (MusicManager.Instance.Source != null && MusicManager.Instance.Source.isPlaying)
+                {
+                    GUILayout.BeginHorizontal();
+
+                    GUILayout.Box($"Now Playing Modded Music: {MusicManager.Instance.CurrentlyPlayingSongName}");
+
+                    GUILayout.EndHorizontal();
+                }
+            }
             if (MusicManager.Instance.FinishedLoading)
             {
                 GUILayout.BeginHorizontal();
@@ -105,52 +145,44 @@ namespace MusicManager
                 {
                     GUILayout.BeginVertical(GUILayout.ExpandWidth(true));
                 }
-                //if (width < Mathf.Epsilon)
-                //{
-                //    width = GUILayoutUtility.GetLastRect().width;
-                //}
                 
                 if (ModdedSongDisplay)
                 {
+                    //Display Modded Songs
                     GUILayout.Box("Modded Songs");
                     AllSongsScroll = GUILayout.BeginScrollView(AllSongsScroll, false, true);
                     for (int i = 0; i < MusicManager.Instance.AllSongs.Count; i++)
                     {
-                        if (GUILayout.Button($"{MusicManager.Instance.AllSongs[i].Name}"))
+                        SongInfo song = MusicManager.Instance.AllSongs[i];
+                        if (GUILayout.Button($"{song.Name}"))
                         {
                             if (!CategoryOrganizationMode)
                             {
                                 //Force Play a song
-                                MusicManager.Instance.ForcePlaySong(i);
+                                ForceLaunchedSong = true;
+                                MusicManager.Instance.ForcePlaySong(null, song);
                             }
                             else
                             {
                                 switch (CurrentCategory)
                                 {
+                                    //Flip song category info to either be a part of or no longer a part of the currently selected category
                                     default:
-                                        MusicManager.Instance.AllSongs[i].IsCombatTrack = !MusicManager.Instance.AllSongs[i].IsCombatTrack;
+                                        song.IsCombatTrack = !song.IsCombatTrack;
                                         break;
                                     case 1:
-                                        MusicManager.Instance.AllSongs[i].IsAmbientMusic = !MusicManager.Instance.AllSongs[i].IsAmbientMusic;
+                                        song.IsAmbientMusic = !song.IsAmbientMusic;
                                         break;
                                     case 2:
-                                        MusicManager.Instance.AllSongs[i].IsBossMusic = !MusicManager.Instance.AllSongs[i].IsBossMusic;
+                                        song.IsBossMusic = !song.IsBossMusic;
                                         break;
                                     case 3:
-                                        MusicManager.Instance.AllSongs[i].IsWarpMusic = !MusicManager.Instance.AllSongs[i].IsWarpMusic;
+                                        song.IsWarpMusic = !song.IsWarpMusic;
                                         break;
                                     case 4:
-                                        MusicManager.Instance.AllSongs[i].IsPlanetMusic = !MusicManager.Instance.AllSongs[i].IsPlanetMusic;
+                                        song.IsPlanetMusic = !song.IsPlanetMusic;
                                         break;
                                 }
-                                //[JsonProperty]
-                                //internal bool IsCombatTrack;
-                                //[JsonProperty]
-                                //internal bool IsAmbientMusic;
-                                //[JsonProperty]
-                                //internal bool IsBossMusic;
-                                //[JsonProperty]
-                                //internal bool IsWarpMusic;
                             }
                         }
                     }
@@ -163,15 +195,18 @@ namespace MusicManager
                     {
                         if (GUILayout.Button($"{NonDuplicateVanillaSongs[i].Name}"))
                         {
-                            MusicManager.Instance.PlayVanillaMusic(NonDuplicateVanillaSongs[i]);
+                            MusicEndPatch.HoldStopForForcePlay = true;
+                            MusicManager.Instance.ForcePlaySong(NonDuplicateVanillaSongs[i], null);
                         }
                     }
                 }
                 GUILayout.EndScrollView();
                 GUILayout.EndVertical();
 
+                //Display secondary box for showing what songs are in the currently selected category
                 if (CategoryOrganizationMode)
                 {
+                    //Change Selected Category
                     GUILayout.BeginVertical(GUILayout.Width(Screen.width * 0.246f));
                     GUILayout.BeginHorizontal();
                     if (GUILayout.Button("<-"))
@@ -196,6 +231,7 @@ namespace MusicManager
                     GUILayout.EndHorizontal();
 
                     CategoriesScroll = GUILayout.BeginScrollView(CategoriesScroll, false, true);
+                    //Get list of songs that are in the category
                     List<SongInfo> categorySongs = MusicManager.Instance.AllSongs.FindAll(song =>
                     {
                         switch (CurrentCategory)
@@ -212,6 +248,7 @@ namespace MusicManager
                                 return song.IsPlanetMusic;
                         }
                     });
+                    //Display list of songs in category and be able to remove them if clicked
                     for (int i = 0; i < categorySongs.Count; i++)
                     {
                         if (GUILayout.Button($"{categorySongs[i].Name}"))

@@ -18,17 +18,20 @@ using ExitGames.Client.Photon;
 namespace MusicManager
 {
     
-    internal sealed class MusicManager : MonoBehaviour
+    internal sealed class MusicManager2 : MonoBehaviour
     {
-        internal static MusicManager Instance;
-        private UnityEngine.AudioSource source;
+        internal static MusicManager2 Instance;
+        internal UnityEngine.AudioSource Source;
         internal float MusicPlayTime = 0;
         internal bool EndVanillaMusic = false;
         internal bool StartVanillaMusic = false;
         internal bool VanillaMusicHasEnded = false;
+        internal string CurrentlyPlayingSongName = "";
         internal bool PlayingVanillaMusic = false;
         internal bool FinishedLoading = false;
         internal bool ForceNextSong = false;
+        internal bool SwitchSongs = false;
+        private bool IsNextSongFinishedLoading = false;
         private AudioClip NextSong;
         private CancellationTokenSource songLoaderCancelation;
         private Task SongLoader;
@@ -121,6 +124,8 @@ namespace MusicManager
              VanillaSongInfo.CreateVanillaSong("mx_warpguardian_theme_one", true, false, true, true),
              VanillaSongInfo.CreateVanillaSong("mx_warpguardian_theme_two", true, false, true, true)
         };
+        //private readonly ESectorVisualIndication[] BossSectors = new ESectorVisualIndication[] { ESectorVisualIndication.ALCHEMIST, ESectorVisualIndication.ANCIENT_SENTRY, ESectorVisualIndication.DEATHSEEKER_COMMANDER,  ESectorVisualIndication.INTREPID_SECTOR_CMDR, ESectorVisualIndication.SWARM_CMDR, ESectorVisualIndication.SWARM_KEEPER, ESectorVisualIndication.ALIEN_SPACE_CAVE, ESectorVisualIndication.LCWBATTLE, ESectorVisualIndication.UNSEEN_MS };
+        //private readonly EShipType[] AbyssBossTypes = new EShipType[] { EShipType.E_ABYSS_LAVA_BOSS, EShipType.E_ABYSS_SPHERE_BOSS, EShipType.E_ABYSS_WARDEN_BOSS, EShipType.E_ABYSS_BOSS };
         void Awake()
         {
             if (Instance != null)
@@ -128,8 +133,8 @@ namespace MusicManager
                 Destroy(Instance);
             }
             Instance = this;
-            source = gameObject.AddComponent<UnityEngine.AudioSource>();
-            source.loop = false;
+            Source = gameObject.AddComponent<UnityEngine.AudioSource>();
+            Source.loop = false;
             SongData.Add(new SongCategoryData(Mod.Instance.MusicDirectory));
             foreach (DirectoryInfo directory in Mod.Instance.MusicSubDirectories)
             {
@@ -137,34 +142,35 @@ namespace MusicManager
             }
             _ = GetSongsFromFolder();
             PrepNextSong();
+            this.StartCoroutine("hello");
+        }
+        IEnumerator hello(int i)
+        {
+            yield return null;
         }
         void Update()
         {
+            //TODO add back a precaching mode to reduce stutters on the don't let songs play out mode
             if (FinishedLoading)
             {
-                if (Settings.Enabled)
+                if (Settings.Enabled && IsNextSongFinishedLoading)
                 {
-                    if (!ForceNextSong)
+                    if (Source != null)
                     {
-                        if (!PlayingVanillaMusic)
+                        if (!ForceNextSong)
                         {
-                            if (source != null)
+                            if (!PlayingVanillaMusic && !Source.isPlaying)
                             {
-                                if (!source.isPlaying)
-                                {
-                                    PlayNext();
-                                }
+                                PlayNext();
                             }
                         }
-                    }
-                    else
-                    {
-                        if (NextSong != null)
+                        else
                         {
                             PlayNext();
                             ForceNextSong = false;
                         }
                     }
+                    
                     //if (!PLNetworkManager.Instance.IsTyping && PLInput.Instance.GetButtonDown("MusicMenu"))
                     //{
                     //    if (songs.Count > 0)
@@ -173,14 +179,25 @@ namespace MusicManager
                     //    }
                     //}
                 }
+                if (NextSong == null)
+                {
+                    PrepNextSong();
+                }
             }
-            if (NextSong == null)
+            //Switch loaded song and potentially force it to play is setting LetSongsPlayOut is false
+            if (Settings.CategoriesMode && SwitchSongs)
             {
+                SwitchSongs = false;
+                StopLoadingNextSong();
                 PrepNextSong();
-            }
-            if (Settings.IsOpen)
+                if (!Settings.LetSongsPlayOut)
+                {
+                    ForceNextSong = true;
+                }
+            } 
+            if (Settings.IsOpen && Source != null)
             {
-                source.volume = Settings.Volume;
+                Source.volume = Settings.Volume;
             }
         }
         void StopLoadingNextSong()
@@ -189,17 +206,25 @@ namespace MusicManager
             {
                 songLoaderCancelation.Cancel();
             }
+            if (NextSong != null)
+            {
+                Destroy(NextSong);
+            }
         }
-        void PlayNext(int Selected = -1)
+        void PlayNext()
         {
             if (PlayingVanillaMusic)
             {
                 StopVanillaMusic();
             }
-            if (ForceNextSong)
+            if (Settings.ForceLaunchedSong)
             {
                 PlayModdedSong();
                 return;
+            }
+            if (ForceNextSong)
+            {
+
             }
             if (Settings.VanillaMusicEnabled && UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
             {
@@ -218,29 +243,45 @@ namespace MusicManager
         }
         private void PlayVanillaMusic()
         {
-            this.StartVanillaMusic = true;
+            
+            if (Source.isPlaying)
+            {
+                Source.Pause();
+            }
+            
             if (Settings.CategoriesMode)
             {
                 List<VanillaSongInfo> list = this.VanillaSongInfos.FindAll(song => ((song.IsCombatTrack && PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic && PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic && PLMusic.Instance.m_PlanetMusicPlaying)));
-                list[UnityEngine.Random.Range(0, list.Count - 1)].PlaySong();
+                if (list.Count > 0)
+                {
+                    this.StartVanillaMusic = true;
+                    list[UnityEngine.Random.Range(0, list.Count - 1)].PlaySong();
+                } else
+                {
+                    this.StartVanillaMusic = true;
+                    Debug.Log("No Vanilla Music Found");
+                    this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
+                }
             }
             else
             {
+                this.StartVanillaMusic = true;
                 this.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfos.Count - 1)].PlaySong();
             }
             this.StartVanillaMusic = false;
         }
         internal void PlayVanillaMusic(VanillaSongInfo song)
         {
-            this.StartVanillaMusic = true;
+            
             if (PlayingVanillaMusic)
             {
                 StopVanillaMusic();
             }
-            if (source != null && source.isPlaying)
+            if (Source != null && Source.isPlaying)
             {
-                source.Pause();
+                Source.Pause();
             }
+            this.StartVanillaMusic = true;
             song.PlaySong();
             this.StartVanillaMusic = false;
         }
@@ -248,25 +289,32 @@ namespace MusicManager
         {
             if (NextSong != null)
             {
-                AudioClip temp = source.clip;
-                source.clip = NextSong;
-                Destroy(temp);
-                source.Play();
+                if (Source.isPlaying)
+                {
+                    Source.Stop();
+                }
+                if (Source.clip != null)
+                {
+                    Destroy(Source.clip);
+                }
+                Source.clip = NextSong;
+                CurrentlyPlayingSongName = NextSong.name;
+                Source.Play();
             }
             PrepNextSong();
         }
         internal void ForcePlaySong(int SelectedSong)
         {
+            StopLoadingNextSong();
             ForceNextSong = true;
             if (PlayingVanillaMusic)
             {
                 StopVanillaMusic();
             }
-            if (source != null && source.isPlaying)
+            if (NextSong != null)
             {
-                StopLoadingNextSong();
+                Destroy(NextSong);
             }
-            NextSong = null;
             PrepNextSong(SelectedSong);
         }
         private void PrepNextSong(int SelectedSong = -1)
@@ -277,36 +325,38 @@ namespace MusicManager
                 {
                     SongLoader.Dispose();
                 }
+                IsNextSongFinishedLoading = false;
                 songLoaderCancelation = new CancellationTokenSource();
-                bool[] bools = new bool[5];
-                if (Settings.CategoriesMode)
-                {
-                    bools[0] = PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
-                    bools[1] = !PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
-                    bools[2] = PLMusic.Instance.m_CombatMusicPlaying && PLMusic.Instance.m_SpecialMusicPlaying;
-                    bools[4] = PLMusic.Instance.m_PlanetMusicPlaying;
-                    if (PLEncounterManager.Instance.PlayerShip != null)
-                    {
-                        bools[3] = PLEncounterManager.Instance.PlayerShip.InWarp;
-                    }
-                    if (bools[3])
-                    {
-                        bools[0] = false;
-                        bools[1] = false;
-                        bools[2] = false;
-                        bools[4] = false;
-                    }
-                }
-                bool Category = Settings.CategoriesMode;
-                List<SongInfo> tempSongCategories = new List<SongInfo>();
-                tempSongCategories.AddRange(AllSongs);
-                SongLoader = Task.Run(async () =>
-                {
-                    await LoadNextSong(songLoaderCancelation.Token, tempSongCategories, Category, bools[0], bools[1], bools[2], bools[3], bools[4], SelectedSong);
-                });
+                //Multithreaded implentation of songloading doesn't work quite right due to unity bullshit that is mostly unsolveable (most of it still could be moved off main thread uses a mainthread executor approach for unityengine main thread required parts but whatever)
+                //bool[] bools = new bool[5];
+                //if (Settings.CategoriesMode)
+                //{
+                //    bools[0] = PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
+                //    bools[1] = !PLMusic.Instance.m_CombatMusicPlaying && !PLMusic.Instance.m_SpecialMusicPlaying;
+                //    bools[2] = PLMusic.Instance.m_CombatMusicPlaying && PLMusic.Instance.m_SpecialMusicPlaying;
+                //    bools[4] = PLMusic.Instance.m_PlanetMusicPlaying;
+                //    if (PLEncounterManager.Instance.PlayerShip != null)
+                //    {
+                //        bools[3] = PLEncounterManager.Instance.PlayerShip.InWarp;
+                //    }
+                //    if (bools[3])
+                //    {
+                //        bools[0] = false;
+                //        bools[1] = false;
+                //        bools[2] = false;
+                //        bools[4] = false;
+                //    }
+                //}
+                //bool Category = Settings.CategoriesMode;
+                //List<SongInfo> tempSongCategories = new List<SongInfo>();
+                //tempSongCategories.AddRange(AllSongs);
+                //SongLoader = Task.Run(async () =>
+                //{
+                //    await LoadNextSong(songLoaderCancelation.Token, tempSongCategories, Category, bools[0], bools[1], bools[2], bools[3], bools[4], SelectedSong);
+                //});
                 //Debug.Log("Started Prep");
                 //Gotta Run it not in the Threadpool for debugging purposes
-                //SongLoader = LoadNextSong(songLoaderCancelation.Token, tempSongCategories, Category, bools[0], bools[1], bools[2], bools[3]);
+                SongLoader = LoadNextSong(songLoaderCancelation.Token, AllSongs, Settings.CategoriesMode, MusicPatch.CurrentModeStorage[0], MusicPatch.CurrentModeStorage[1], MusicPatch.CurrentModeStorage[2], MusicPatch.CurrentModeStorage[3], MusicPatch.CurrentModeStorage[4], SelectedSong);
             }
         }
         private async Task GetSongsFromFolder()
@@ -373,10 +423,6 @@ namespace MusicManager
                 }
             }
             //Debug.Log("FinishedLoading");
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return; 
-            }
             if (WorkingSongData.Count < 1)
             {
                 return;
@@ -399,16 +445,12 @@ namespace MusicManager
             if (categories)
             {
                 //Debug.Log("Sorting Categories");
-                List<SongInfo> tempSongInfos = WorkingSongData.FindAll(song => (song.IsCombatTrack & combat) | (song.IsBossMusic & boss) | (song.IsAmbientMusic & ambient) | (song.IsPlanetMusic & planet) | (song.IsWarpMusic & warp));
+                List<SongInfo> tempSongInfos = WorkingSongData.AsParallel().Where(song => (song.IsCombatTrack & combat) | (song.IsBossMusic & boss) | (song.IsAmbientMusic & ambient) | (song.IsPlanetMusic & planet) | (song.IsWarpMusic & warp)).ToList<SongInfo>();
                 if (tempSongInfos.Count > 0)
                 {
                     songInfos = tempSongInfos;
                 }
-                Debug.Log($"{songInfos.Count}");
-            }
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
+                //Debug.Log($"{songInfos.Count}");
             }
             //Debug.Log("Calling LoadAudioFile");
             
@@ -464,6 +506,7 @@ namespace MusicManager
                     TaskCompletionSource<bool> task = new TaskCompletionSource<bool>();
                     www.SendWebRequest().completed += (s => { bool res = true; task.TrySetResult(res); });
                     //Debug.Log("Awaiting Completion of load");
+                    await Task.Yield();
                     await task.Task;
                     //while (!www.isDone)
                     //{
@@ -473,19 +516,25 @@ namespace MusicManager
                     //        return;
                     //    }
                     //}
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        return;
-                    }
                     if (www.result == UnityWebRequest.Result.ConnectionError)
                     {
                         //Debug.Log(www.error);
                     }
                     else
                     {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return;
+                        }
                         AudioClip addedSong = DownloadHandlerAudioClip.GetContent(www);
                         addedSong.name = song.Name;
+                        if (NextSong != null)
+                        {
+                            if (NextSong)
+                            Destroy(NextSong);
+                        }
                         NextSong = addedSong;
+                        IsNextSongFinishedLoading = true;
                     }
 
                 }

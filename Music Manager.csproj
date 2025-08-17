@@ -619,6 +619,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Command.cs" />
+    <Compile Include="MusicManager2.cs" />
     <Compile Include="SongInfoTypes.cs" />
     <Compile Include="GUI.cs" />
     <Compile Include="Mod.cs" />
