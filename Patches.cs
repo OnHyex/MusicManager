@@ -15,7 +15,9 @@ namespace MusicManager
     {
         static void Postfix()
         {
+#if DEBUG
             Debug.Log("Ran MusicManager adder");
+#endif
             PLNetworkManager.Instance.gameObject.AddComponent<MusicManager>();
         }
     }
@@ -25,7 +27,9 @@ namespace MusicManager
         internal static bool[] CurrentModeStorage = new bool[5];
         static bool Prefix(string inMusicString, bool isCombatTrack, bool isPlanetTrack, bool isSpecialTrack, bool isLoopingTrack)
         {
+#if DEBUG
             Debug.Log($"Ran PlayMusic: {MusicManager.Instance.PlayingVanillaMusic}");
+#endif
             if (!Settings.Enabled)
             {
                 MusicManager.Instance.PlayingVanillaMusic = true;
@@ -48,7 +52,6 @@ namespace MusicManager
                 bools[1] = !isCombatTrack && !isSpecialTrack && !isPlanetTrack;//ambient
                 bools[2] = isCombatTrack && isSpecialTrack;//boss
                 bools[4] = isPlanetTrack;//planet
-
                 //bools[0] = PLEncounterManager.Instance.PlayerShip != null && PLEncounterManager.Instance.PlayerShip.AlertLevel > 0;
                 //PLSectorInfo sector = PLServer.GetCurrentSector();
                 ////bools[2] = BossSectors.Contains(sector.m_VisualIndication) || (PLAbyssShipInfo.Instance != null && AbyssBossTypes.Contains(PLInGameUI.Instance.BossUI_SpaceTarget.ShipTypeID) || (sector.m_VisualIndication == ESectorVisualIndication.WASTEDWING && );
@@ -89,7 +92,9 @@ namespace MusicManager
                 MusicManager.Instance.VanillaMusicHasEnded = true;
             }
             HoldStopForForcePlay = false;
+#if DEBUG
             Debug.Log($"Ran Callback: {MusicManager.Instance.VanillaMusicHasEnded}, {MusicManager.Instance.PlayingVanillaMusic}");
+#endif
         }
     }
     [HarmonyPatch(typeof(PLMusic), "StopCurrentMusic")]
@@ -98,7 +103,9 @@ namespace MusicManager
         
         static bool Prefix()
         {
+#if DEBUG
             Debug.Log($"Ran Stop: {MusicManager.Instance.PlayingVanillaMusic}");
+#endif
             if (!Settings.Enabled)
             {
                 return true;
