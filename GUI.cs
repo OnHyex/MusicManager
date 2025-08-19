@@ -13,8 +13,8 @@ namespace MusicManager
         internal static SaveValue<float> ChanceOfVanillaMusic = new SaveValue<float>("ChanceOfVanillaMusic", 1f);
         internal static bool Enabled = true;
         private static bool EnabledStateStorage = true;
-        internal static bool CategoriesMode = false;
-        internal static bool LetSongsPlayOut = true;
+        internal static SaveValue<bool> CategoriesMode = new SaveValue<bool>("CategoriesMode",false);
+        internal static SaveValue<bool> LetSongsPlayOut = new SaveValue<bool>("LetSongsPlayOut",true);
         internal static Vector2 AllSongsScroll = new Vector2(0, 0);
         internal static bool CategoryOrganizationMode = false;
         internal static SaveValue<float> Volume = new SaveValue<float>("Volume", 1f);
@@ -88,8 +88,8 @@ namespace MusicManager
             }
             GUILayout.BeginHorizontal();
             EnabledStateStorage = GUILayout.Toggle(EnabledStateStorage, "Enabled");
-            CategoriesMode = GUILayout.Toggle(CategoriesMode, "Situational Music Enabled");
-            LetSongsPlayOut = GUILayout.Toggle(LetSongsPlayOut, "Songs Play Till End");
+            CategoriesMode.Value = GUILayout.Toggle(CategoriesMode.Value, "Situational Music Enabled");
+            LetSongsPlayOut.Value = GUILayout.Toggle(LetSongsPlayOut.Value, "Songs Play Till End");
 
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
