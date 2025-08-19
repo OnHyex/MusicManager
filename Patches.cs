@@ -45,7 +45,7 @@ namespace MusicManager
             {
                 bool[] bools = new bool[5];
                 bools[0] = isCombatTrack && !isSpecialTrack;//combat
-                bools[1] = !isCombatTrack && !isSpecialTrack;//ambient
+                bools[1] = !isCombatTrack && !isSpecialTrack && !isPlanetTrack;//ambient
                 bools[2] = isCombatTrack && isSpecialTrack;//boss
                 bools[4] = isPlanetTrack;//planet
 
