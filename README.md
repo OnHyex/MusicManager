@@ -32,3 +32,4 @@ Important Notes:
 - Premade music packs can be installed just by dropping the entire folder extracted into your Music folder for ease of organization and allowing the songcategoryinfo.json file from overwriting the base Music folder one so that the situational music meta data isn't accidentally destroyed
 - If you delete or overwrite the SongCategoryInfo.json from the Music folder or sub folders, info about when songs should play according to the situational music system will be lost
 - All songs lacking prior information on when it should be played in the situational music system default to Space Ambience
+- Only put files of the types .json, .mp2, .mp3, .wav, .aac, .ogg, and .aiff in the music folders otherwise unexpected behaviour could occur
