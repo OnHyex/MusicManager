@@ -226,14 +226,16 @@ namespace MusicManager
         {
             if (Settings.CategoriesMode)
             {
-                List<VanillaSongInfo> list = VanillaSongInfo.VanillaSongInfos.FindAll(song => ((song.IsCombatTrack && PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic && PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic && PLMusic.Instance.m_PlanetMusicPlaying)));
+                List<VanillaSongInfo> list = VanillaSongInfo.VanillaSongInfos.FindAll(song => ((song.IsCombatTrack == PLMusic.Instance.m_CombatMusicPlaying) && (song.IsSpecialMusic == PLMusic.Instance.m_SpecialMusicPlaying) && (song.IsPlanetMusic == PLMusic.Instance.m_PlanetMusicPlaying)));
                 if (list.Count > 0)
                 {
                     return list[UnityEngine.Random.Range(0, list.Count - 1)];
                 }
                 else
                 {
+#if DEBUG
                     Debug.Log("No Vanilla Music Found");
+#endif
                     return VanillaSongInfo.VanillaSongInfos[UnityEngine.Random.Range(0, VanillaSongInfo.VanillaSongInfos.Count - 1)];
                 }
             }
