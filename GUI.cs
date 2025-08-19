@@ -14,7 +14,6 @@ namespace MusicManager
         internal static bool Enabled = true;
         private static bool EnabledStateStorage = true;
         internal static bool CategoriesMode = false;
-        internal static bool VanillaMusicEnabled = true;
         internal static bool LetSongsPlayOut = true;
         internal static Vector2 AllSongsScroll = new Vector2(0, 0);
         internal static bool CategoryOrganizationMode = false;
@@ -90,17 +89,13 @@ namespace MusicManager
             GUILayout.BeginHorizontal();
             EnabledStateStorage = GUILayout.Toggle(EnabledStateStorage, "Enabled");
             CategoriesMode = GUILayout.Toggle(CategoriesMode, "Situational Music Enabled");
-            VanillaMusicEnabled = GUILayout.Toggle(VanillaMusicEnabled, "Vanilla Music Enabled");
             LetSongsPlayOut = GUILayout.Toggle(LetSongsPlayOut, "Songs Play Till End");
 
             GUILayout.EndHorizontal();
-            if (VanillaMusicEnabled)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.Label($"Vanilla Music Chance: {(ChanceOfVanillaMusic * 100).ToString("0.0")}%");
-                ChanceOfVanillaMusic.Value = GUILayout.HorizontalSlider(ChanceOfVanillaMusic.Value, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
-                GUILayout.EndHorizontal();
-            }
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"Vanilla Music Chance: {(ChanceOfVanillaMusic * 100).ToString("0.0")}%");
+            ChanceOfVanillaMusic.Value = GUILayout.HorizontalSlider(ChanceOfVanillaMusic.Value, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
+            GUILayout.EndHorizontal();
 
             //Volume Control
             GUILayout.BeginHorizontal();
