@@ -134,7 +134,7 @@ namespace MusicManager
                 //    Destroy(CurrentlyPlayingModdedSong.audio);
                 //}
                 StoredVanillaMusicState = PlayingVanillaMusic;
-                if (UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
+                if (AllSongs.Count < 1 || UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
                 {
                     PlayingVanillaMusic = true;
                     CurrentlyPlayingVanillaSong = PickNextVanillaSong();
