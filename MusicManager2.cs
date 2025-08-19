@@ -263,6 +263,11 @@ namespace MusicManager
         }
         private IEnumerator LoadModdedSong()
         {
+            if (CurrentlyPlayingModdedSong.audio != null)
+            {
+                IsNextModdedSongFinishedLoading = true;
+                yield break;
+            }
             string[] songInfo = CurrentlyPlayingModdedSong.song.Name.Split(new char[] { '.' }, 2);
             string songName = songInfo[0];
             string fileType = songInfo[1];
