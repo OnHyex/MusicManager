@@ -67,7 +67,23 @@ namespace MusicManager
             {
                 if (!Enabled && EnabledStateStorage)
                 {
+                    //Turning off vanilla music before fully reenabling
                     PLMusic.Instance.StopCurrentMusic();
+                }
+                if (Enabled && !EnabledStateStorage)
+                {
+                    //turning off Music Manager vanilla / moddded music before disabling
+                    if (MusicManager.Instance.Source != null && MusicManager.Instance.Source.isPlaying)
+                    {
+                        MusicManager.Instance.Source.Stop();
+                    }
+                    if (MusicManager.Instance.CurrentlyPlayingVanillaSong != null && MusicManager.Instance.PlayingVanillaMusic)
+                    {
+                        MusicManager.Instance.CurrentlyPlayingVanillaSong.StopSong();
+                    }
+                    Enabled = EnabledStateStorage;
+                    //Starting Up what should be the normal track before turning it off
+                    PLMusic.Instance.PlayMusic(PLMusic.Instance.m_CurrentPlayingMusicEventString, PLMusic.Instance.m_CombatMusicPlaying, PLMusic.Instance.m_PlanetMusicPlaying, PLMusic.Instance.m_SpecialMusicPlaying, PLMusic.Instance.m_LoopingMusicPlaying);
                 }
                 Enabled = EnabledStateStorage;
             }
