@@ -91,12 +91,12 @@ namespace MusicManager
             {
                 if (Application.isFocused && CurrentlyInPulsar && Source != null && !CurrentlyPreparingNextSong)
                 {
-                            if (VanillaMusicHasEnded && !Source.isPlaying)
-                            {
-                                this.StartCoroutine(PlayNext());
-                            }
+                    if (VanillaMusicHasEnded && !Source.isPlaying)
+                    {
+                        this.StartCoroutine(PlayNext());
+                    }
                     Source.volume = Settings.Volume.Value;
-                        }
+                }
                 //Pausing and Unpausing Music when application is tabbed out
                 if (Application.isFocused != CurrentlyInPulsar)
                 {
@@ -111,14 +111,14 @@ namespace MusicManager
                     CurrentlyInPulsar = Application.isFocused;
                 }
             }
-                    //if (!PLNetworkManager.Instance.IsTyping && PLInput.Instance.GetButtonDown("MusicMenu"))
-                    //{
-                    //    if (songs.Count > 0)
-                    //    {
-                    //        source.clip = songs[UnityEngine.Random.Range(0, songs.Count - 1)];
-                    //    }
-                    //}
-                }
+            //if (!PLNetworkManager.Instance.IsTyping && PLInput.Instance.GetButtonDown("MusicMenu"))
+            //{
+            //    if (songs.Count > 0)
+            //    {
+            //        source.clip = songs[UnityEngine.Random.Range(0, songs.Count - 1)];
+            //    }
+            //}
+        }
         internal IEnumerator PlayNext()
         {
             CurrentlyPreparingNextSong = true;

@@ -137,24 +137,24 @@ namespace MusicManager
                     GUILayout.EndHorizontal();
                 }
             }
-                GUILayout.BeginHorizontal();
-                if (ReloadDirectories != null && ReloadDirectories.IsCompleted) { ReloadDirectories.Dispose(); }
+            GUILayout.BeginHorizontal();
+            if (ReloadDirectories != null && ReloadDirectories.IsCompleted) { ReloadDirectories.Dispose(); }
             if (GUILayout.Button("Reload Song List") && (ReloadDirectories == null || ReloadDirectories.IsCompleted))
-                {
-                    ReloadDirectories = MusicManager.Instance.ReloadSongs();
-                }
-                if (GUILayout.Button("Modded Songs"))
-                {
-                    ModdedSongDisplay = true;
-                }
-                if (GUILayout.Button("Vanilla Songs"))
-                {
-                    ModdedSongDisplay = false;
-                    CategoryOrganizationMode = false;
-                }
-                CategoryOrganizationMode = GUILayout.Toggle(CategoryOrganizationMode, "Organize Songs");
-                CategoryOrganizationMode = ModdedSongDisplay && CategoryOrganizationMode;
-                GUILayout.EndHorizontal();
+            {
+                ReloadDirectories = MusicManager.Instance.ReloadSongs();
+            }
+            if (GUILayout.Button("Modded Songs"))
+            {
+                ModdedSongDisplay = true;
+            }
+            if (GUILayout.Button("Vanilla Songs"))
+            {
+                ModdedSongDisplay = false;
+                CategoryOrganizationMode = false;
+            }
+            CategoryOrganizationMode = GUILayout.Toggle(CategoryOrganizationMode, "Organize Songs");
+            CategoryOrganizationMode = ModdedSongDisplay && CategoryOrganizationMode;
+            GUILayout.EndHorizontal();
             if (MusicManager.Instance.FinishedLoading)
             {
                 GUILayout.BeginHorizontal();
