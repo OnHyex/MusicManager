@@ -30,6 +30,7 @@ namespace MusicManager
         internal bool CurrentlyPreparingNextSong;
         internal bool ForcePlayingNextSong;
         internal bool StoredVanillaMusicState;
+        internal bool CurrentlyInPulsar;
         internal string CurrentlyPlayingSongName = "";
         void Awake()
         {
@@ -86,22 +87,30 @@ namespace MusicManager
         }
         void Update()
         {
-            if (FinishedLoading)
+            if (FinishedLoading && Settings.Enabled)
             {
-                if (Settings.Enabled)
+                if (Application.isFocused && CurrentlyInPulsar && Source != null && !CurrentlyPreparingNextSong)
                 {
-                    if (Source != null)
-                    {
-                        if (!CurrentlyPreparingNextSong)
-                        {
                             if (VanillaMusicHasEnded && !Source.isPlaying)
                             {
                                 this.StartCoroutine(PlayNext());
                             }
                     Source.volume = Settings.Volume.Value;
                         }
+                //Pausing and Unpausing Music when application is tabbed out
+                if (Application.isFocused != CurrentlyInPulsar)
+                {
+                    if (Source != null && Source.isPlaying)
+                    {
+                        Source.Pause();
                     }
-
+                    else if (!Source.isPlaying && !PlayingVanillaMusic)
+                    {
+                        Source.Play();
+                    }
+                    CurrentlyInPulsar = Application.isFocused;
+                }
+            }
                     //if (!PLNetworkManager.Instance.IsTyping && PLInput.Instance.GetButtonDown("MusicMenu"))
                     //{
                     //    if (songs.Count > 0)
@@ -110,8 +119,6 @@ namespace MusicManager
                     //    }
                     //}
                 }
-            }
-        }
         internal IEnumerator PlayNext()
         {
             CurrentlyPreparingNextSong = true;
