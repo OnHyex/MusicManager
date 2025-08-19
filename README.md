@@ -1,4 +1,4 @@
-//TODO: Add time scrubbing for modded songs, potentially make it so that directory names are listed prior to song names for organization, fix issues with removing directories then hitting reload
+//TODO: Add time scrubbing for modded songs, potentially make it so that directory names are listed prior to song names for organization, fix issues with removing directories then hitting reload, add precaching all songs mode to reduce stutters
 
 Music Manager:
 
