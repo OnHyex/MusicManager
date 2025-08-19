@@ -46,7 +46,6 @@ namespace MusicManager
                 SongData.Add(new SongCategoryData(directory));
             }
             _ = GetSongsFromFolder();
-            this.StartCoroutine("hello");
         }
         private async Task GetSongsFromFolder()
         {
@@ -123,10 +122,10 @@ namespace MusicManager
             yield return null;
             if (!ForcePlayingNextSong)
             {
-                if (CurrentlyPlayingModdedSong != null && CurrentlyPlayingModdedSong.audio != null)
-                {
-                    Destroy(CurrentlyPlayingModdedSong.audio);
-                }
+                //if (CurrentlyPlayingModdedSong != null && CurrentlyPlayingModdedSong.audio != null)
+                //{
+                //    Destroy(CurrentlyPlayingModdedSong.audio);
+                //}
                 StoredVanillaMusicState = PlayingVanillaMusic;
                 if (UnityEngine.Random.Range(0f, 1f) < Settings.ChanceOfVanillaMusic)
                 {
@@ -191,10 +190,10 @@ namespace MusicManager
         {
             if (!CurrentlyPreparingNextSong)
             {
-                if (CurrentlyPlayingModdedSong != null && CurrentlyPlayingModdedSong.audio != null)
-                {
-                    Destroy(CurrentlyPlayingModdedSong.audio);
-                }
+                //if (CurrentlyPlayingModdedSong != null && CurrentlyPlayingModdedSong.audio != null)
+                //{
+                //    Destroy(CurrentlyPlayingModdedSong.audio);
+                //}
                 if (vanillaSong == null)
                 {
                     CurrentlyPlayingModdedSong = moddedSong;
@@ -333,6 +332,25 @@ namespace MusicManager
             foreach (DirectoryInfo directory in Mod.Instance.MusicSubDirectories)
             {
                 SongData.Add(new SongCategoryData(directory));
+            }
+        }
+        internal void ClearAllAudioClips()
+        {
+            _ = SafeClearAllAudioClips();
+        }
+        private async Task SafeClearAllAudioClips()
+        {
+            await Task.Yield();
+            while (CurrentlyPreparingNextSong)
+            {
+                await Task.Delay(100);
+            }
+            for (int i = 0; i < AllSongs.Count; i++)
+            {
+                if (AllSongs[i].audio != null)
+                {
+                    Destroy(AllSongs[i].audio);
+                }
             }
         }
     }

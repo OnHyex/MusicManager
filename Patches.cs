@@ -119,5 +119,20 @@ namespace MusicManager
             MusicManager.Instance.OutputAllJson();
         }
     }
-
+    [HarmonyPatch(typeof(PLServer), "CPEI_HandleActivateWarpDrive")]
+    class UnloadingPatch
+    { 
+        static void Postfix()
+        {
+            MusicManager.Instance.ClearAllAudioClips();
+        }
+    }
+    [HarmonyPatch(typeof(PLServer), "Start")]
+    class StartServerUnloadingPatch
+    {
+        static void Postfix()
+        {
+            MusicManager.Instance.ClearAllAudioClips();
+        }
+    }
 }
