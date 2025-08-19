@@ -324,6 +324,13 @@ namespace MusicManager
             {
                 await Task.Delay(100);
             }
+            ClearAllAudioClips();
+            DirectoryInfo musicDirectory = new DirectoryInfo(Mod.Instance.MusicDirectory.FullName);
+            if (!musicDirectory.Exists)
+            {
+                musicDirectory.Create();
+                Mod.Instance.MusicDirectory = musicDirectory;
+            }
             OutputAllJson();
             AllSongs.Clear();
             ReloadDirectories();
