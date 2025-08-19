@@ -99,6 +99,7 @@ namespace MusicManager
                             {
                                 this.StartCoroutine(PlayNext());
                             }
+                    Source.volume = Settings.Volume.Value;
                         }
                     }
 

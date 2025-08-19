@@ -4,12 +4,13 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Threading.Tasks;
 using Crosstales.BWF.Data;
+using PulsarModLoader;
 
 namespace MusicManager
 {
     internal sealed class Settings : ModSettingsMenu
     {
-        internal static float ChanceOfVanillaMusic = 0.1f;
+        internal static SaveValue<float> ChanceOfVanillaMusic = new SaveValue<float>("ChanceOfVanillaMusic", 1f);
         internal static bool Enabled = true;
         private static bool EnabledStateStorage = true;
         internal static bool CategoriesMode = false;
@@ -17,7 +18,7 @@ namespace MusicManager
         internal static bool LetSongsPlayOut = true;
         internal static Vector2 AllSongsScroll = new Vector2(0, 0);
         internal static bool CategoryOrganizationMode = false;
-        internal static float Volume = 1f;
+        internal static SaveValue<float> Volume = new SaveValue<float>("Volume", 1f);
         private static int CurrentCategory = 0;
         //private static float width = 0;
         private static readonly string[] CategoryNames = new string[] 
@@ -81,7 +82,7 @@ namespace MusicManager
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label($"Vanilla Music Chance: {(ChanceOfVanillaMusic * 100).ToString("0.0")}%");
-                ChanceOfVanillaMusic = GUILayout.HorizontalSlider(ChanceOfVanillaMusic, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
+                ChanceOfVanillaMusic.Value = GUILayout.HorizontalSlider(ChanceOfVanillaMusic.Value, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
                 GUILayout.EndHorizontal();
             }
 
@@ -93,7 +94,11 @@ namespace MusicManager
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label($"Custom Volume: {(Volume * 100).ToString("0.0")}%");
-            Volume = GUILayout.HorizontalSlider(Volume, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
+            Volume.Value = GUILayout.HorizontalSlider(Volume.Value, 0f, 1f, GUILayout.Width(Screen.width * 0.246f));
+            if (MusicManager.Instance.Source != null)
+            {
+                MusicManager.Instance.Source.volume = Volume;
+            }
             GUILayout.EndHorizontal();
 
             //Show name of currently playing song
