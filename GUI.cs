@@ -231,8 +231,7 @@ namespace MusicManager
                         if (CurrentCategory == 0)
                         {
                             CurrentCategory = 4;
-                        }
-                        CurrentCategory--;
+                        } else CurrentCategory--;
                     }
                     GUILayout.Box($"{CategoryNames[CurrentCategory]}");
                     if (GUILayout.Button("->"))
@@ -242,7 +241,7 @@ namespace MusicManager
                         {
                             CurrentCategory = 0;
                         }
-                        CurrentCategory++;
+                        else CurrentCategory++;
                     }
                     GUILayout.EndHorizontal();
 
