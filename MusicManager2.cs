@@ -22,6 +22,7 @@ namespace MusicManager
         internal bool PlayingVanillaMusic;
         internal VanillaSongInfo CurrentlyPlayingVanillaSong;
         internal SongInfo CurrentlyPlayingModdedSong;
+        private SongInfo PreviouslyPlayingModdedSong;
         internal AudioSource Source;
         internal List<SongCategoryData> SongData = new List<SongCategoryData>();
         internal List<SongInfo> AllSongs = new List<SongInfo>();
@@ -142,6 +143,7 @@ namespace MusicManager
                 else
                 {
                     PlayingVanillaMusic = false;
+                    PreviouslyPlayingModdedSong = CurrentlyPlayingModdedSong;
                     CurrentlyPlayingModdedSong = PickNextModdedSong();
                     this.StartCoroutine(LoadModdedSong());
                 }
@@ -168,6 +170,10 @@ namespace MusicManager
             if (Source != null && Source.isPlaying)
             {
                 Source.Stop();
+            }
+            if (PreviouslyPlayingModdedSong != null && PreviouslyPlayingModdedSong != CurrentlyPlayingModdedSong && PreviouslyPlayingModdedSong.audio != null)
+            {
+                Destroy(PreviouslyPlayingModdedSong.audio);
             }
             if (PlayingVanillaMusic)
             {
@@ -197,6 +203,7 @@ namespace MusicManager
         {
             if (!CurrentlyPreparingNextSong)
             {
+                PreviouslyPlayingModdedSong = CurrentlyPlayingModdedSong;
                 //if (CurrentlyPlayingModdedSong != null && CurrentlyPlayingModdedSong.audio != null)
                 //{
                 //    Destroy(CurrentlyPlayingModdedSong.audio);
@@ -299,6 +306,7 @@ namespace MusicManager
                 //string url = string.Format("file://{0}", songFile.Name);
                 using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(CurrentlyPlayingModdedSong.song.FullName, type))
                 {
+                    ((DownloadHandlerAudioClip)www.downloadHandler).streamAudio = true;
                     TaskCompletionSource<bool> task = new TaskCompletionSource<bool>();
                     yield return www.SendWebRequest();
                     //Debug.Log("Awaiting Completion of load");
@@ -324,7 +332,7 @@ namespace MusicManager
             {
                 await Task.Delay(100);
             }
-            ClearAllAudioClips();
+            await SafeClearAllAudioClips();
             DirectoryInfo musicDirectory = new DirectoryInfo(Mod.Instance.MusicDirectory.FullName);
             if (!musicDirectory.Exists)
             {
@@ -368,7 +376,7 @@ namespace MusicManager
             }
             for (int i = 0; i < AllSongs.Count; i++)
             {
-                if (AllSongs[i].audio != null)
+                if (AllSongs[i].audio != null && AllSongs[i] != CurrentlyPlayingModdedSong)
                 {
                     Destroy(AllSongs[i].audio);
                 }

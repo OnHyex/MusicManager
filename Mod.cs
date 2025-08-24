@@ -46,7 +46,7 @@ namespace MusicManager
                 Debug.Log("No subdirectories found");
             }
         }
-        public override string Version => "1.0.0";
+        public override string Version => "1.0.1";
         public override string Name => "Music Manager";
         public override string Author => "OnHyex, Mest";
         public override string ShortDescription => "A brief description";
